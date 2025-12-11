@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User Roles
+enum Role {
+  WORKER
+  MANAGER
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String   // Hashed
+  role      Role     @default(WORKER)
+  createdAt DateTime @default(now())
+
+  timeEntries   TimeEntry[]
+  leaveRequests LeaveRequest[]
+}
+
+model TimeEntry {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  
+  type        String    @default("WORK") // WORK, BREAK
+  
+  checkIn     DateTime  @default(now())
+  checkOut    DateTime?
+  
+  // Geolocation
+  latIn       Float?
+  lngIn       Float?
+  latOut      Float?
+  lngOut      Float?
+  
+  mood        Int?      // 1-5
+  notes       String?
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model LeaveRequest {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  
+  startDate DateTime
+  endDate   DateTime
+  reason    String
+  
+  status    LeaveStatus @default(PENDING)
+  managerNote String?
+
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
